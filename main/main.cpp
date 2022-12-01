@@ -8,18 +8,6 @@
 #if defined(max) // разрешение конфликта max Windows.h и limits
 #undef max
 #endif
-//template<class T> class Str {
-//    T* str_;
-//    unsigned int size_;
-//    template<typename T> friend ostream& operator<<(ostream&, Str<T>&);
-//public:
-//    Str();
-//};
-//template <class T> Str<T>::Str() : str_{ nullptr }, size_{ 0 } {}
-//template<typename T> ostream& operator<<(ostream& os, Str<T>& obj) {
-//    os << obj.str_ << endl;
-//    return os;
-//}
 
 int main()
 {
@@ -38,7 +26,6 @@ int main()
 			cin.get();
 		}
 	}
-
     List<char> linkedList;
     
 	int character = 0;
