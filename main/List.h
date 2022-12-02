@@ -1,5 +1,9 @@
 #pragma once
 #include <iostream>
+#include <string>
+#include <cstring>
+#include <fstream>
+#include <conio.h>
 using namespace std;
 namespace ListVariable {
     inline unsigned int ARR_SIZE = 4;
@@ -12,7 +16,9 @@ template<class T> class Str {
     //template<class T> friend ostream& operator<<(ostream&, Str<T>*);
     //template<class T> friend istream& operator>>(istream&, Str<T>*);
     template<class T> friend ostream& operator<<(ostream&, Str<T>&);
-    template<class T> friend istream& operator>>(istream&, Str<T>&);    
+    template<class T> friend istream& operator>>(istream&, Str<T>&);  
+    template<class T> friend bool operator< (const Str<T>&, const Str<T>&);
+    template<class T> friend bool operator> (const Str<T>&, const Str<T>&);
 public:
     Str();
     ~Str();
@@ -132,6 +138,18 @@ template <class T> void Str<T>::resize() {
 //    (*obj).str_[counter] = '\n';
 //    return in;
 //}
+template<class T> bool operator< (const Str<T>& lhs, const Str<T>& rhs) {
+    if (strcmp(lhs.str_, rhs.str_) < 0) {
+        return true;
+    }
+    return false;
+}
+template<class T> bool operator> (const Str<T>& lhs, const Str<T>& rhs) {
+    if (strcmp(lhs.str_, rhs.str_) > 0) {
+        return true;
+    }
+    return false;
+}
 template<class T> ostream& operator<<(ostream& os, Str<T>& obj) {
     if (obj.str_ != nullptr) {
         unsigned int i = 0;
@@ -151,18 +169,27 @@ template <class T> istream& operator>>(istream& in, Str<T>& obj) {
     if (obj.size_ == 0) {
         obj.resize();
     }
-    while (true) {
-        if (cin.peek() == '\n' && counter > 0) {
+    while (true) {        
+        /*if (in.peek() == '\n' && counter > 0) {
+            break;
+        }*/
+        if (!in) {
+            obj.str_[counter-1] = '\n';
             break;
         }
-        in >> ch;        
-        if (counter + 2 > obj.size_) {
+        in.get(ch);
+        if (ch == '\n') {
+            obj.str_[counter] = ch;
+            break;
+        }
+        //in >> ch;        
+        if (counter + 3 > obj.size_) {
             obj.resize();
         }
         obj.str_[counter] = ch;
         counter++;
     }
-    obj.str_[counter] = '\n';
+    //obj.str_[counter] = '\n';
     return in;
 }
 //template <class T> class Str {	
@@ -232,18 +259,74 @@ template <class T> void Node<T>::setNext(Node<T>* next) {
 template <class T> void Node<T>::cinStr(unsigned int i) {
     cin >> *arr_[i];
 }
-template <class T> class List
+
+template <class T> class List // CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST
 {
 	Node<T>* first_;
 	Node<T>* last_;
 public:
     List();
     void insertAtEnd();
+    void insertAtEnd(Str<T>*);
+    void insertWithOrder();
     void show();
     void delLast();
+    void redFIle();
+    void writeFIle();
+    void writeBinFIle();
+    void readBinFIle();
+    void sort();
 };
 template <class T> List<T>::List() : first_{ nullptr }, last_{ nullptr } {}
 //template <class T> List<T>::List() : first_{nullptr}, last_{ nullptr } {}
+template <class T> void List<T>::insertWithOrder() {
+    int character = 0;
+    cout << "После выполнения все элементы будут отсортированы, если не хотите продолжать нажмите - Esc, чтобы продолжить любую другую клавишу" << endl;
+    character = _getch();
+    if (character == 27) {
+        return;
+    }
+    insertAtEnd();
+    sort();
+}
+template <class T> void List<T>::insertAtEnd(Str<T>* nStr) {
+    if (first_ == nullptr) {
+        Node<T>* newNode = new Node<T>;
+        /*cout << "Введите строку: ";
+        newNode->cinStr(0);*/
+        newNode->setStr(nStr, 0);
+        first_ = newNode;
+        last_ = newNode;
+        return;
+    }
+    Node<T>* tmp = first_;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            if (tmpStr->getString() == nullptr) {
+                /*cout << "Введите строку: ";
+                tmp->cinStr(i);*/
+                tmp->setStr(nStr, i);
+                //tmpStr = nStr;
+                return;
+            }
+        }
+        tmp = tmp->getNext();
+    }
+    // если нет места в массивах, создаём новый переписывая в него половину последнего
+    Node<T>* newNode = new Node<T>;
+    for (int i = ListVariable::ARR_SIZE / 2, j = 0; i < ListVariable::ARR_SIZE; i++, j++) {
+        Str<T>* StrOld = last_->getStr(i);
+        Str<T>* StrNew = newNode->getStr(j);
+        StrNew->copyString(StrOld);
+        StrOld->setString(nullptr); StrOld->setSize(0); // обнуление текущего элемнта
+    }
+    /*cout << "Введите строку: ";
+    newNode->cinStr(ListVariable::ARR_SIZE / 2);*/
+    newNode->setStr(nStr, ListVariable::ARR_SIZE / 2);
+    last_->setNext(newNode);
+    last_ = newNode;
+}
 template <class T> void List<T>::insertAtEnd() {
     if (first_ == nullptr) {
         Node<T>* newNode = new Node<T>;
@@ -332,5 +415,154 @@ template <class T> void List<T>::show() {
         }
         tmp = tmp->getNext();
         cout << endl;
+    }
+}
+
+template <class T> void List<T>::redFIle() {
+    string fileName;
+    cout << "Введие имя файла: ";
+    //fileName += "1.txt";
+    getline(cin, fileName);
+    //cin >> fileName; // 
+    ifstream fin(fileName);
+    if (!fin)
+    {
+        cout << "Файл не может быть открыт или создан" << endl;
+        return;
+    }
+    while (!fin.eof()) {
+        Str<T>* nStr = new Str<T>; nStr->resize();
+        fin >> *nStr;
+        insertAtEnd(nStr);
+        fin.peek();
+    }
+    fin.close();
+}
+
+template <class T> void List<T>::writeFIle() {
+    if (first_ == nullptr) {
+        cout << "Нечего сохранять в файл" << endl;
+        return;
+    }
+    string fileName;
+    cout << "Введие имя файла: ";
+    getline(cin, fileName);
+    ofstream fout(fileName);
+    if (!fout)
+    {
+        cout << "Файл не может быть открыт или создан" << endl;
+        return;
+    }
+
+    Node<T>* tmp = first_;
+    unsigned int id = 0;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            /*if (tmpStr == nullptr) { continue; }*/
+            if (tmpStr->getString() != nullptr) {
+                fout << *tmpStr;
+            }
+        }
+        tmp = tmp->getNext();
+    }
+    fout.close();
+}
+template <class T> void List<T>::readBinFIle() {
+    string fileName;
+    cout << "Введие имя файла: ";
+    //fileName += "1.txt";
+    getline(cin, fileName);
+    //cin >> fileName; // 
+    ifstream bin(fileName, ios::in | ios::binary);
+    if (!bin)
+    {
+        cout << "Файл не может быть открыт или создан" << endl;
+        return;
+    }
+    while (!bin.eof()) {
+        Str<T>* nStr = new Str<T>; //nStr->resize();
+        //bin >> *nStr;        
+        size_t len = 0;
+        bin.read((char*)& len, sizeof(len));
+        T* tmpString = new T[len];
+        bin.read(tmpString, len);
+        nStr->setString(tmpString); nStr->setSize(len);
+        insertAtEnd(nStr);
+        bin.peek();
+    }
+    bin.close();
+}
+template <class T> void List<T>::writeBinFIle() {
+    string fileName;
+    cout << "Введие имя файла: ";
+    getline(cin, fileName);
+    ofstream bout(fileName, ios::out | ios::binary);
+    if (!bout)
+    {
+        cout << "Файл не может быть открыт или создан" << endl;
+        return;
+    }
+    Node<T>* tmp = first_;
+    unsigned int id = 0;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            /*if (tmpStr == nullptr) { continue; }*/
+            if (tmpStr->getString() != nullptr) {
+                //fout << *tmpStr;
+                T* tmpString = tmpStr->getString();
+                size_t len = strlen(tmpString);
+                bout.write((char*)&len, sizeof(len));
+                bout.write(tmpString, len);
+            }
+        }
+        tmp = tmp->getNext();
+    }
+    bout.close();    
+}
+template <class T> void List<T>::sort() {
+    if (first_ == nullptr) {
+        cout << "Структура пуста" << endl;
+    }
+    Node<T>* tmp = first_;
+    unsigned int id = 0;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+
+            Node<T>* tmp2 = tmp;
+            bool hit = true;
+            if (i == ListVariable::ARR_SIZE - 1) { // если следуюзий элемент не в текущемм массиве
+                tmp2 = tmp->getNext();
+                hit = false;
+            }                        
+            while (tmp2 != nullptr) {
+                int j = 0;
+                if (hit) { // первый раз следующий элемент может быть в том же массиве
+                    j = i + 1;
+                    hit = false;
+                }
+                for (; j < ListVariable::ARR_SIZE; j++) {
+                    Str<T>* tmpStr2 = tmp2->getStr(j);
+                    if (tmpStr->getString() == nullptr || tmpStr2->getString() == nullptr) {
+                        continue;
+                    }
+                    if (*tmpStr > *tmpStr2) {
+                        Str<T>* copy = new Str<T>; copy->copyString(tmpStr);
+                        tmpStr->copyString(tmpStr2);
+                        tmpStr2->copyString(copy);
+                        delete copy;
+
+                        /*Str<T>* StrOld = last_->getStr(i);
+                        Str<T>* StrNew = newNode->getStr(j);
+                        StrNew->copyString(StrOld);
+                        StrOld->setString(nullptr); StrOld->setSize(0);*/
+                    }
+                }
+                tmp2 = tmp2->getNext();
+            }
+        }
+        tmp = tmp->getNext();
     }
 }
