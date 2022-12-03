@@ -11,15 +11,16 @@ void showMenu() {
 	cout << "0 - вывод всей структуры" << endl;
 	cout << "1 - добавить строку" << endl;
 	cout << "2 - удалить последнюю строку" << endl;
-	/*cout << "3 - включение строки по логическому номеру" << endl;
-	cout << "4 - извлечение строки по логическому номеру" << endl;*/
+	cout << "3 - включение строки по логическому номеру" << endl;
+	cout << "e - извлечение строки по логическому номеру" << endl;
+	cout << "4 - удалить строку по логическому номеру" << endl;
 	cout << "5 - включение строки с сохранением порядка" << endl;
 	cout << "6 - загрузка строк из бинарного файла" << endl;
 	cout << "7 - сохранение строк в бинарный файл" << endl;
 	cout << "8 - загрузка строк из текстового файла" << endl;
 	cout << "9 - сохранение строк в текстовый файл" << endl;
 	cout << "s - сортировка" << endl;
-	//cout << "b - балансировка" << endl;
+	cout << "b - балансировка" << endl;
 	cout << "Esc - выход" << endl;
 }
 int main()
@@ -29,17 +30,19 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-	/*ListVariable::ARR_SIZE = 0;
+	ListVariable::ARR_SIZE = 0;
 	while (ListVariable::ARR_SIZE < 2) {
 		system("cls");
 		cout << "введите максимальную длину массива(не меньше 2): ";
 		cin >> ListVariable::ARR_SIZE;
+		cin.ignore(); // разрешение конфликта сin и getline
 		if (!cin) {
 			cin.ignore(numeric_limits<streamsize>::max(), '\n');
 			cin.clear();
 			cin.get();
 		}
-	}*/
+	}
+
     List<char> linkedList;
     
 	int character = 0;
@@ -51,7 +54,8 @@ int main()
 		switch (character)
 		{
 		case 48: // 0
-		{			
+		{		
+			system("cls");
 			linkedList.show();
 			break;
 		}
@@ -67,10 +71,20 @@ int main()
 		}
 		case 51: // 3
 		{
+			linkedList.insertByNum();
+			break;
+		}
+		case 101: // e
+		{
+			Str<char>* strByNum = linkedList.extractById();
+			if (strByNum != nullptr) {
+				cout << *strByNum;
+			}
 			break;
 		}
 		case 52: // 4
 		{
+			linkedList.delByNum();
 			break;
 		}
 		case 53: // 5
@@ -100,6 +114,7 @@ int main()
 		}
 		case 98: // b
 		{
+			linkedList.balance();
 			break;
 		}
 		case 115: // s

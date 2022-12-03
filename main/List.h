@@ -3,7 +3,13 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include < limits >
 #include <conio.h>
+
+#if defined(max) // разрешение конфликта max Windows.h и limits
+#undef max
+#endif
+
 using namespace std;
 namespace ListVariable {
     inline unsigned int ARR_SIZE = 4;
@@ -260,22 +266,27 @@ template <class T> void Node<T>::cinStr(unsigned int i) {
     cin >> *arr_[i];
 }
 
-template <class T> class List // CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST
+template <class T> class List // CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST CLASS LIST
 {
 	Node<T>* first_;
 	Node<T>* last_;
 public:
     List();
     void insertAtEnd();
+    void insertAtEndWithOrder(Str<T>*);
     void insertAtEnd(Str<T>*);
     void insertWithOrder();
+    void insertByNum();
     void show();
     void delLast();
+    void delByNum();
     void redFIle();
     void writeFIle();
     void writeBinFIle();
     void readBinFIle();
     void sort();
+    void balance();
+    Str<T>* extractById();
 };
 template <class T> List<T>::List() : first_{ nullptr }, last_{ nullptr } {}
 //template <class T> List<T>::List() : first_{nullptr}, last_{ nullptr } {}
@@ -288,6 +299,60 @@ template <class T> void List<T>::insertWithOrder() {
     }
     insertAtEnd();
     sort();
+}
+template <class T> void List<T>::insertAtEndWithOrder(Str<T>* nStr) {
+    Node<T>* tmp = last_;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            if (tmpStr->getString() == nullptr) {
+                tmp->setStr(nStr, i);
+                return;
+            }
+        }
+        tmp = tmp->getNext();
+    }
+    Node<T>* newNode = new Node<T>;
+    for (int i = ListVariable::ARR_SIZE / 2, j = 0; i < ListVariable::ARR_SIZE; i++, j++) {
+        Str<T>* StrOld = last_->getStr(i);
+        Str<T>* StrNew = newNode->getStr(j);
+        StrNew->copyString(StrOld);
+        StrOld->setString(nullptr); StrOld->setSize(0); // обнуление текущего элемнта
+    }
+    /*cout << "Введите строку: ";
+    newNode->cinStr(ListVariable::ARR_SIZE / 2);*/
+    newNode->setStr(nStr, ListVariable::ARR_SIZE / 2);
+    last_->setNext(newNode);
+    last_ = newNode;
+}
+template <class T> Str<T>* List<T>::extractById() {
+    unsigned int num = 0;
+    cout << "Введите логический номер: ";
+    cin >> num;
+    cin.ignore();
+    Str<T>* StrNew = new Str<T>;
+
+    Node<T>* tmp = first_;
+    unsigned int id = 0;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            /*if (tmpStr == nullptr) { continue; }*/
+            if (tmpStr->getString() != nullptr) {
+                if (id == num) {
+                    StrNew->copyString(tmpStr);
+                    return StrNew;
+                }
+                id++;
+            }
+        }
+        tmp = tmp->getNext();
+    }
+    cout << "логический номер должен быть не меньше 0 и быть не больше ";
+    if (id > 0) { id--; }
+    cout << id << endl;
+    delete StrNew;
+    return nullptr;
 }
 template <class T> void List<T>::insertAtEnd(Str<T>* nStr) {
     if (first_ == nullptr) {
@@ -397,9 +462,126 @@ template <class T> void List<T>::delLast() {
         
     }
 }
+template <class T> void List<T>::delByNum() {
+    unsigned int num = 0;
+    cout << "Введите логический номер: ";
+    cin >> num;
+    cin.ignore(); // разрешение конфликта сin и getline
+
+    Node<T>* tmp = first_;
+    Node<T>* prevTmp = tmp;
+    unsigned int id = 0;
+    if (first_ == nullptr) {
+        cout << "Нечего удалять" << endl;
+        return;
+    }
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            if (tmpStr->getString() != nullptr) {
+                if (num == id) {
+                    if (i == ListVariable::ARR_SIZE - 1) { // удаление последнего элемента массива
+                        Str<T>* StrNew = tmp->getStr(i);
+                        StrNew->setString(nullptr); StrNew->setSize(0);
+                        return;
+                    }                   
+                    if (tmp->getStr(i + 1)->getString() == nullptr && i!=0) {
+                        Str<T>* StrNew = tmp->getStr(i);
+                        StrNew->setString(nullptr); StrNew->setSize(0);
+                        return;
+                    }
+                    if (tmp->getStr(i+1)->getString() != nullptr) { // если есть что удалять в массиве                       
+                        for (int j = i; j < ListVariable::ARR_SIZE-1; j++) { // переносим все элементы в массиве 
+                            if (tmp->getStr(j + 1)->getString() != nullptr) {
+                                Str<T>* StrOld = tmp->getStr(j);
+                                Str<T>* StrNew = tmp->getStr(j+1);
+                                StrOld->copyString(StrNew);
+                                StrNew->setString(nullptr); StrNew->setSize(0);
+                            }                         
+                        }
+                        return;
+                    }                    
+                    // если нужно удалять весь Node
+                    if (first_ == last_) {
+                        delete first_;
+                        first_ = nullptr;
+                        last_ = nullptr;
+                        return;
+                    }
+                    if (tmp == last_) {
+                        prevTmp->setNext(nullptr);
+                        last_ == prevTmp;
+                        delete tmp;
+                        return;
+                    }
+                    if (prevTmp == first_) { 
+                        first_ = tmp->getNext();
+                        delete tmp;                        
+                        return;
+                    }                    
+                    prevTmp->setNext(tmp->getNext());
+                    delete tmp;
+                    return;
+                }
+                id++;
+            }
+        }
+        prevTmp = tmp;
+        tmp = tmp->getNext();
+    }
+    cout << "логический номер должен быть не меньше 0 и быть не больше " << id-1 << endl;
+}
+template <class T> void List<T>::insertByNum() {
+    Str<T>* nStr = new Str<T>; nStr->resize();
+    unsigned int num = 0;
+    cout << "Введите логический номер: ";
+    cin >> num;
+    cin.clear(); // на случай, если предыдущий ввод завершился с ошибкой
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout << "введите строку: ";
+    cin >> *nStr;
+
+    Node<T>* tmp = first_;
+    unsigned int id = 0; bool hit = false; unsigned int lastArrIndex = 0;
+    if (0 == num && first_ == nullptr) {
+        insertAtEnd(nStr);
+        return;
+    }
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            /*if (tmpStr == nullptr) { continue; }*/
+            if (tmpStr->getString() != nullptr) {
+                if (num == id) {
+                    hit = true;
+                }
+                if (hit) {
+                    Str<T>* copy = new Str<T>; copy->copyString(tmpStr);
+                    tmpStr->copyString(nStr);
+                    nStr->copyString(copy);
+                    delete copy;
+                }
+                id++;
+                lastArrIndex = i;
+            }          
+        }
+        tmp = tmp->getNext();
+    }
+    if (hit) {
+        //insertAtEnd(nStr);
+        insertAtEndWithOrder(nStr);
+        return;
+    }
+    if (id == num) {
+        insertAtEndWithOrder(nStr);
+        return;
+    }
+    cout << "логический номер должен быть не меньше 0 и быть не больше " << id << endl;
+}
 template <class T> void List<T>::show() {
     if (first_ == nullptr) {
         cout << "Структура пуста" << endl;
+        return;
     }
     Node<T>* tmp = first_;
     unsigned int id = 0;
@@ -422,6 +604,7 @@ template <class T> void List<T>::redFIle() {
     string fileName;
     cout << "Введие имя файла: ";
     //fileName += "1.txt";
+
     getline(cin, fileName);
     //cin >> fileName; // 
     ifstream fin(fileName);
@@ -526,7 +709,6 @@ template <class T> void List<T>::sort() {
         cout << "Структура пуста" << endl;
     }
     Node<T>* tmp = first_;
-    unsigned int id = 0;
     while (tmp != nullptr) {
         for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
             Str<T>* tmpStr = tmp->getStr(i);
@@ -565,4 +747,81 @@ template <class T> void List<T>::sort() {
         }
         tmp = tmp->getNext();
     }
+}
+template <class T> void List<T>::balance() {
+    unsigned int strCounter = 0, nodeCounter = 0;
+    Node<T>* tmp = first_;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            /*if (tmpStr == nullptr) { continue; }*/
+            if (tmpStr->getString() != nullptr) {
+                strCounter++;
+            }            
+        }
+        nodeCounter++;
+        tmp = tmp->getNext();
+    }
+
+    unsigned int nArrLength = strCounter / nodeCounter;
+    while (nArrLength * nodeCounter < strCounter) {
+        nArrLength++;
+    }
+
+    Str<T>** tmpArr = new Str<T>*[strCounter]; // создаём временный массив куда скопируем все строки
+    for (int i = 0; i < strCounter; i++) {
+        tmpArr[i] = new Str<T>;
+    }
+    // скопируем все строки из структуры
+    unsigned int c = 0;
+    tmp = first_; Node<T>* prevTmp = tmp;
+    while (tmp != nullptr) {
+        for (int i = 0; i < ListVariable::ARR_SIZE; i++) {
+            Str<T>* tmpStr = tmp->getStr(i);
+            if (tmpStr->getString() != nullptr) {
+                Str<T>* newStr = (tmpArr[c]);
+                newStr->copyString(tmpStr);
+                //cout << *(tmpArr[c]) << endl;
+                c++;
+                
+            }
+        }
+        prevTmp = tmp;
+        tmp = tmp->getNext();
+        delete prevTmp;
+    }
+
+    /*for (int i = 0; i < c; i++) {
+        cout << *(tmpArr[i]) << endl;
+    }*/
+
+    Node<T>* newNode = new Node<T>;
+    first_ = newNode;
+    last_ = newNode;
+    tmp = first_;
+
+    unsigned int k = 0;
+    while (k<c) { // копируем из временного массива в структуру
+        for (int i = 0; i < nArrLength; i++) {
+            if (k < c) {
+                Str<T>* tmpStr = tmp->getStr(i);
+                //cout << *(tmpArr[k]) << endl;
+                Str<T>* newStr = (tmpArr[k]);
+                tmpStr->copyString(newStr);
+                k++;
+            } else {
+                break;
+            }            
+        }
+        if (k < c) {
+            Node<T>* newNode = new Node<T>;
+            last_->setNext(newNode);
+            last_ = newNode;
+        }        
+        tmp = tmp->getNext();
+    }
+    for (int i = 0; i < strCounter; i++) {
+        delete tmpArr[i];
+    }
+    delete[] tmpArr;
 }
